@@ -7,11 +7,11 @@ import (
 
 // Struct untuk menyimpan data teman
 type Teman struct {
-	Absen   int
-	Nama    string
-	Alamat  string
+	Absen     int
+	Nama      string
+	Alamat    string
 	Pekerjaan string
-	Alasan  string
+	Alasan    string
 }
 
 // Function untuk mendapatkan data teman berdasarkan absen
@@ -29,7 +29,6 @@ func getDataByAbsen(absen int) Teman {
 func main() {
 	// Mendapatkan argument dari terminal
 	args := os.Args
-
 
 	// Mendapatkan nomor absen dari argumen
 	absen := args[1]
