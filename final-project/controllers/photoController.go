@@ -40,25 +40,22 @@ func CreatePhoto(c *gin.Context) {
 
 func UpdatePhoto(c *gin.Context) {
 	db := database.GetDB()
+	photoID, _ := strconv.Atoi(c.Param("photoId"))
 	userData := c.MustGet("userData").(jwt.MapClaims)
-	contentType := helpers.GetContentType(c)
-	Photo := models.Photo{}
+	_ = userData
 
-	photoId, _ := strconv.Atoi(c.Param("photoId"))
-	userID := uint(userData["id"].(float64))
+	var photo models.Photo
 
-	if contentType == "application/json" {
-		c.ShouldBindJSON(&Photo)
-	} else {
-		c.ShouldBind(&Photo)
+	if err := db.First(&photo, photoID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error":   "photo not found",
+			"message": err.Error(),
+		})
+		return
 	}
 
-	Photo.UserID = userID
-	Photo.ID = uint(photoId)
-
-	err := db.Model(&Photo).Where("id = ?", photoId).Updates(models.Photo{Title: Photo.Title, Caption: Photo.Caption, PhotoUrl: Photo.PhotoUrl}).Error
-
-	if err != nil {
+	var updatePhoto models.Photo
+	if err := c.ShouldBindJSON(&updatePhoto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "bad request",
 			"message": err.Error(),
@@ -66,5 +63,76 @@ func UpdatePhoto(c *gin.Context) {
 		return
 	}
 
+	if updatePhoto.Title != "" {
+		photo.Title = updatePhoto.Title
+	}
+	if updatePhoto.Caption != "" {
+		photo.Caption = updatePhoto.Caption
+	}
+	if updatePhoto.PhotoUrl != "" {
+		photo.PhotoUrl = updatePhoto.PhotoUrl
+	}
+
+	if err := db.Save(&photo).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "internal server error",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	response := gin.H{
+		"id":         photo.ID,
+		"title":      photo.Title,
+		"caption":    photo.Caption,
+		"photo_url":  photo.PhotoUrl,
+		"user_id":    photo.UserID,
+		"updated_at": photo.UpdatedAt,
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func GetPhoto(c *gin.Context) {
+	db := database.GetDB()
+	userData := c.MustGet("userData").(jwt.MapClaims)
+	userID := uint(userData["id"].(float64))
+	Photo := models.Photo{}
+	err := db.Debug().Where("user_id = ?", userID).Find(&Photo).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "internal server error",
+			"message": err.Error(),
+		})
+		return
+	}
 	c.JSON(http.StatusOK, Photo)
+}
+
+func DeletePhoto(c *gin.Context) {
+	db := database.GetDB()
+	photoID, _ := strconv.Atoi(c.Param("photoId"))
+	userData := c.MustGet("userData").(jwt.MapClaims)
+	_ = userData
+
+	var photo models.Photo
+	if err := db.First(&photo, photoID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error":   "photo not found",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	if err := db.Delete(&photo).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "internal server error",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "photo deleted successfully",
+	})
 }
