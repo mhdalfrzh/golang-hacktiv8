@@ -45,29 +45,3 @@ func PhotoAuthorization() gin.HandlerFunc {
 		c.Next()
 	}
 }
-
-func UserAuthorization() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		database.GetDB()
-		userID, err := strconv.Atoi(c.Param("userId"))
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-				"error":   "Bad Request",
-				"message": "Invalid Parameter",
-			})
-			return
-		}
-
-		userData := c.MustGet("userData").(jwt.MapClaims)
-		requestingUserID := uint(userData["id"].(float64))
-		if requestingUserID != uint(userID) {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error":   "Unauthorized",
-				"message": "You are not allowed to update this user",
-			})
-			return
-		}
-
-		c.Next()
-	}
-}
