@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Status</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        text-align: center;
+      }
+
+      #status-container {
+        margin-top: 20px;
+      }
+
+      .status {
+        display: inline-block;
+        margin-right: 20px;
+      }
+
+      .status h2 {
+        margin-bottom: 5px;
+      }
+
+      .safe {
+        color: green;
+      }
+
+      .alert {
+        color: orange;
+      }
+
+      .danger {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Status Air dan Angin</h1>
+    <div id="status-container">
+      <div class="status" id="water-status">
+        <h2>Status Air</h2>
+        <p id="water-value">Loading...</p>
+        <p id="water-status-text">Loading...</p>
+      </div>
+      <div class="status" id="wind-status">
+        <h2>Status Angin</h2>
+        <p id="wind-value">Loading...</p>
+        <p id="wind-status-text">Loading...</p>
+      </div>
+    </div>
+
+    <script>
+      // Membuat koneksi WebSocket
+      const socket = new WebSocket("ws://localhost:8080/ws");
+
+      // Mengatur fungsi untuk menangani pesan yang diterima dari server
+      socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+
+        // Mengupdate nilai air (water) pada halaman
+        document.getElementById(
+          "water-value"
+        ).innerText = `${data.water} meter`;
+
+        // Menentukan status udara
+        let waterStatus = "Safe";
+        if (data.water < 5) {
+          waterStatus = "Safe";
+        } else if (data.water >= 6 && data.water <= 8) {
+          waterStatus = "Alert";
+        } else {
+          waterStatus = "Danger";
+        }
+        document.getElementById("water-status").className =
+          "status " + waterStatus.toLowerCase();
+        document.getElementById("water-status-text").innerText = waterStatus;
+
+        // Mengupdate nilai wind pada halaman
+        document.getElementById(
+          "wind-value"
+        ).innerText = `${data.wind} meter/detik`;
+
+        // Menentukan status angin
+        let windStatus = "Safe";
+        if (data.wind < 6) {
+          windStatus = "Safe";
+        } else if (data.wind >= 7 && data.wind <= 15) {
+          windStatus = "Alert";
+        } else {
+          windStatus = "Danger";
+        }
+        document.getElementById("wind-status").className =
+          "status " + windStatus.toLowerCase();
+        document.getElementById("wind-status-text").innerText = windStatus;
+      };
+    </script>
+  </body>
+</html>
