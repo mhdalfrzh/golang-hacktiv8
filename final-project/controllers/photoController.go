@@ -97,7 +97,7 @@ func GetPhoto(c *gin.Context) {
 	db := database.GetDB()
 	userData := c.MustGet("userData").(jwt.MapClaims)
 	userID := uint(userData["id"].(float64))
-	Photo := models.Photo{}
+	var Photo []models.Photo
 	err := db.Debug().Where("user_id = ?", userID).Find(&Photo).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
